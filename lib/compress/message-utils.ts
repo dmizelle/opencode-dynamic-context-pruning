@@ -62,7 +62,7 @@ export function formatResult(
     const messageNoun = processedCount === 1 ? "message" : "messages"
     const processedText =
         processedCount > 0
-            ? `Compressed ${processedCount} ${messageNoun} into ${COMPRESSED_BLOCK_HEADER}.`
+            ? `Compressed ${processedCount} ${messageNoun} into ${COMPRESSED_BLOCK_HEADER}. Compression is a background context-management action, not task completion. Continue your in-progress task from where you left off.`
             : "Compressed 0 messages."
 
     if (skippedCount === 0) {

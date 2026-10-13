@@ -78,12 +78,9 @@ export async function prepareSession(
     }
 }
 
-export async function finalizeSession(
+export async function resetCompressPending(
     ctx: ToolContext,
     toolCtx: RunContext,
-    rawMessages: WithParts[],
-    entries: NotificationEntry[],
-    batchTopic: string | undefined,
 ): Promise<void> {
     if (ctx.state.manualMode === "compress-pending") {
         ctx.state.manualMode = false
@@ -94,6 +91,16 @@ export async function finalizeSession(
             ctx.config.manualMode.enabled,
         )
     }
+}
+
+export async function finalizeSession(
+    ctx: ToolContext,
+    toolCtx: RunContext,
+    rawMessages: WithParts[],
+    entries: NotificationEntry[],
+    batchTopic: string | undefined,
+): Promise<void> {
+    await resetCompressPending(ctx, toolCtx)
     applyPendingCompressionDurations(ctx.state)
     await saveSessionState(ctx.state, ctx.logger)
 
