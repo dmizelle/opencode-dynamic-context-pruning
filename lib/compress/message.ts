@@ -108,6 +108,9 @@ export function createCompressMessageTool(ctx: ToolContext): ReturnType<typeof t
 
                 const runId = allocateRunId(ctx.state)
 
+                let totalCompressedTokens = 0
+                let totalSummaryTokens = 0
+
                 for (const { plan, summaryWithTools } of preparedPlans) {
                     const blockId = allocateBlockId(ctx.state)
                     const storedSummary = wrapCompressedSummary(
@@ -116,8 +119,9 @@ export function createCompressMessageTool(ctx: ToolContext): ReturnType<typeof t
                         ctx.state.idFormat,
                     )
                     const summaryTokens = countTokens(storedSummary)
+                    totalSummaryTokens += summaryTokens
 
-                    applyCompressionState(
+                    const applied = applyCompressionState(
                         ctx.state,
                         {
                             topic: plan.entry.topic,
@@ -136,6 +140,7 @@ export function createCompressMessageTool(ctx: ToolContext): ReturnType<typeof t
                         storedSummary,
                         [],
                     )
+                    totalCompressedTokens += applied.compressedTokens
 
                     notifications.push({
                         blockId,
@@ -147,7 +152,13 @@ export function createCompressMessageTool(ctx: ToolContext): ReturnType<typeof t
 
                 await finalizeSession(ctx, toolCtx, rawMessages, notifications, input.topic)
 
-                return formatResult(plans.length, skippedIssues, skippedCount)
+                return formatResult(
+                    plans.length,
+                    skippedIssues,
+                    skippedCount,
+                    totalCompressedTokens,
+                    totalSummaryTokens,
+                )
             } finally {
                 await resetCompressPending(ctx, toolCtx)
             }

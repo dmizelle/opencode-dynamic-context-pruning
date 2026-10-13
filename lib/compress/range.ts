@@ -3,6 +3,7 @@ import type { ToolContext } from "./types"
 import { countTokens } from "../token-utils"
 import { rangeFormat } from "../prompts/extensions/tool"
 import { formatMessageRef, formatBlockRef, type IdFormat } from "../message-ids"
+import { formatCompressionBar } from "./message-utils"
 import { finalizeSession, prepareSession, resetCompressPending, type NotificationEntry } from "./pipeline"
 import {
     appendProtectedPromptInfo,
@@ -89,6 +90,8 @@ export function createCompressRangeTool(ctx: ToolContext): ReturnType<typeof too
                     consumedBlockIds: number[]
                 }> = []
                 let totalCompressedMessages = 0
+                let totalCompressedTokens = 0
+                let totalSummaryTokens = 0
 
                 for (const plan of resolvedPlans) {
                     const parsedPlaceholders = parseBlockPlaceholders(
@@ -165,6 +168,7 @@ export function createCompressRangeTool(ctx: ToolContext): ReturnType<typeof too
                         ctx.state.idFormat,
                     )
                     const summaryTokens = countTokens(storedSummary)
+                    totalSummaryTokens += summaryTokens
 
                     const applied = applyCompressionState(
                         ctx.state,
@@ -187,6 +191,7 @@ export function createCompressRangeTool(ctx: ToolContext): ReturnType<typeof too
                     )
 
                     totalCompressedMessages += applied.messageIds.length
+                    totalCompressedTokens += applied.compressedTokens
 
                     notifications.push({
                         blockId,
@@ -198,7 +203,7 @@ export function createCompressRangeTool(ctx: ToolContext): ReturnType<typeof too
 
                 await finalizeSession(ctx, toolCtx, rawMessages, notifications, input.topic)
 
-                return `Compressed ${totalCompressedMessages} messages into ${COMPRESSED_BLOCK_HEADER}. Compression is a background context-management action, not task completion. Continue your in-progress task from where you left off.`
+                return `Compressed ${totalCompressedMessages} messages into ${COMPRESSED_BLOCK_HEADER}.${formatCompressionBar(totalCompressedTokens, totalSummaryTokens)} Compression is a background context-management action, not task completion. Continue your in-progress task from where you left off.`
             } finally {
                 await resetCompressPending(ctx, toolCtx)
             }

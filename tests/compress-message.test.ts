@@ -207,9 +207,9 @@ test("compress message mode batches individual message summaries", async () => {
         },
     )
 
-    assert.equal(
+    assert.match(
         result,
-        "Compressed 2 messages into [Compressed conversation section]. Compression is a background context-management action, not task completion. Continue your in-progress task from where you left off.",
+        /^Compressed 2 messages into \[Compressed conversation section\]\.\n\[[█░]{20}\] \d+ → \d+ tokens \(\d+% reclaimed\)\n Compression is a background context-management action, not task completion\. Continue your in-progress task from where you left off\.$/,
     )
     assert.equal(state.prune.messages.blocksById.size, 2)
 
@@ -631,9 +631,9 @@ test("compress message mode allows messages containing compress tool parts", asy
         },
     )
 
-    assert.equal(
+    assert.match(
         result,
-        "Compressed 1 message into [Compressed conversation section]. Compression is a background context-management action, not task completion. Continue your in-progress task from where you left off.",
+        /^Compressed 1 message into \[Compressed conversation section\]\.\n\[[█░]{20}\] \d+ → \d+ tokens \(\d+% reclaimed\)\n Compression is a background context-management action, not task completion\. Continue your in-progress task from where you left off\.$/,
     )
     assert.equal(state.prune.messages.blocksById.size, 1)
     const block = Array.from(state.prune.messages.blocksById.values())[0]

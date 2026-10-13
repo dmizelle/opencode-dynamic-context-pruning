@@ -54,15 +54,31 @@ export function validateArgs(args: CompressMessageToolArgs): void {
     }
 }
 
+export function formatCompressionBar(compressedTokens: number, summaryTokens: number): string {
+    if (compressedTokens <= 0) {
+        return ""
+    }
+
+    const reclaimed = Math.max(compressedTokens - summaryTokens, 0)
+    const ratio = Math.min(reclaimed / compressedTokens, 1)
+    const width = 20
+    const filled = Math.round(width * ratio)
+    const bar = "█".repeat(filled) + "░".repeat(width - filled)
+    const fmt = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}K` : `${n}`)
+    return `\n[${bar}] ${fmt(compressedTokens)} → ${fmt(summaryTokens)} tokens (${Math.round(ratio * 100)}% reclaimed)\n`
+}
+
 export function formatResult(
     processedCount: number,
     skippedIssues: string[],
     skippedCount: number,
+    compressedTokens = 0,
+    summaryTokens = 0,
 ): string {
     const messageNoun = processedCount === 1 ? "message" : "messages"
     const processedText =
         processedCount > 0
-            ? `Compressed ${processedCount} ${messageNoun} into ${COMPRESSED_BLOCK_HEADER}. Compression is a background context-management action, not task completion. Continue your in-progress task from where you left off.`
+            ? `Compressed ${processedCount} ${messageNoun} into ${COMPRESSED_BLOCK_HEADER}.${formatCompressionBar(compressedTokens, summaryTokens)} Compression is a background context-management action, not task completion. Continue your in-progress task from where you left off.`
             : "Compressed 0 messages."
 
     if (skippedCount === 0) {
