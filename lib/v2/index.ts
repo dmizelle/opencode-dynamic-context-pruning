@@ -31,6 +31,7 @@ import { matchesGlob } from "../protected-patterns"
 import { history, project } from "./messages"
 import { analyzeContextTokens } from "../commands/context"
 import { buildStatsReport } from "../commands/stats"
+import { wrapLanguageModel } from "./strip-output-tags"
 import { rpc } from "./rpc"
 
 // Extension point for future model-invisible V2 reports. Never use synthetic()
@@ -169,6 +170,9 @@ export async function setup(ctx: Plugin.Context) {
         limits.clear()
         for (const model of editor.list())
             limits.set(`${model.providerID}/${model.id}`, model.limit.context)
+    })
+    await ctx.aisdk.hook("language", (event) => {
+        if (event.language) event.language = wrapLanguageModel(event.language)
     })
     for (const kind of ["context", "compaction"] as const)
         await ctx.session.hook(kind, (event) =>
